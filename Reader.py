@@ -26,5 +26,7 @@ def read_image_annotations(filename):
 
     return image, annotations
 
+class FruitDataset()
+
 
 read_image_annotations('20130320T004354.849492.Cam6_52')
