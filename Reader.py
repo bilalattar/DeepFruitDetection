@@ -55,6 +55,7 @@ class FruitDataset(Dataset):
         target['boxes'] = boxes
         target['labels'] = labels
         target['image_id'] = torch.tensor([index])
+        target['isfruit'] = isfruit
 
         return image, target, image_id
 
