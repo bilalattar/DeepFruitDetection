@@ -4,6 +4,7 @@ import cv2
 from torch.utils.data import DataLoader, Dataset
 import torch
 import torchvision
+import matplotlib.pyplot as plt
 
 class FruitType(Enum):
     APPLE=1
@@ -11,7 +12,7 @@ class FruitType(Enum):
     ALMOND=3
 
 def read_data(FruitType):
-    PATH="data/acfr-fruit-dataset/apples"
+    PATH="data/acfr-fruit-dataset/almonds"
     training_set_names = pd.read_csv(f"{PATH}/sets/train.txt", names=["image_id"])
     test_set_names = pd.read_csv(f"{PATH}/sets/test.txt", names=["image_id"])
     val_set_names = pd.read_csv(f"{PATH}/sets/val.txt", names=["image_id"])
@@ -20,7 +21,7 @@ def read_data(FruitType):
     return (training_set_names, test_set_names, val_set_names, train_val_set_names)
 
 def read_image_annotations(filename):
-    PATH = "data/acfr-fruit-dataset/apples"
+    PATH = "data/acfr-fruit-dataset/almonds"
     filename_annotations = PATH + '/annotations/' + filename + '.csv'
     filename_image = PATH + '/images/' + filename + '.png'
 
@@ -45,8 +46,13 @@ class FruitDataset(Dataset):
         image = cv2.imread(filename_image, cv2.IMREAD_COLOR)
         annotations = pd.read_csv(filename_annotations)
 
-        #Create boxes
-        boxes = 0
+        boxes = pd.DataFrame({'x_start': [0], 'y_start': [0],
+                              'x_end': [0], 'y_end': [0]})
+
+        if annotations.empty == False:
+            boxes = pd.DataFrame({'x_start': annotations['x'], 'y_start': annotations['y'],
+                                'x_end': (annotations['x']+annotations['dx']),
+                                'y_end': (annotations['y']+annotations['dy'])})
 
         labels = torch.ones((self.data.shape[0],), dtype=torch.int64)
         isfruit = torch.zeros((self.data.shape[0],), dtype=torch.int64)
@@ -65,16 +71,27 @@ class FruitDataset(Dataset):
 def collate_fn(batch):
     return tuple(zip(*batch))
 
-PATH = "data/acfr-fruit-dataset/apples"
+PATH = "data/acfr-fruit-dataset/almonds"
 training_data = read_data(FruitType.APPLE)[0]
 train_dataset = FruitDataset(training_data, PATH)
 
 train_data_loader = DataLoader(
     train_dataset,
-    batch_size=16,
+    batch_size=1,
     shuffle=False,
-    num_workers=4,
-    collate_fn = collate_fn
+    num_workers=1
 )
 
-print(train_data_loader)
+image, target, image_id = train_dataset.__getitem__(5)
+fig, ax = plt.subplots(1, 1, figsize=(16, 8))
+
+for idx, val in enumerate(target['boxes'].iterrows()):
+    x_start = int(val[1]['x_start'])
+    y_start = int(val[1]['y_start'])
+    x_end = int(val[1]['x_end'])
+    y_end = int(val[1]['y_end'])
+    cv2.rectangle(image, (x_start, y_start), (x_end, y_end), (255, 0, 0))
+
+ax.set_axis_off()
+ax.imshow(image)
+plt.show()
