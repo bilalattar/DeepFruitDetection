@@ -6,13 +6,16 @@ import torch
 import torchvision
 import matplotlib.pyplot as plt
 
+from Plotter import plot_bounding_boxes
+
+
 class FruitType(Enum):
     APPLE=1
     MANGO=2
     ALMOND=3
 
 def read_data(FruitType):
-    PATH="data/acfr-fruit-dataset/almonds"
+    PATH="data/acfr-fruit-dataset/mangoes"
     training_set_names = pd.read_csv(f"{PATH}/sets/train.txt", names=["image_id"])
     test_set_names = pd.read_csv(f"{PATH}/sets/test.txt", names=["image_id"])
     val_set_names = pd.read_csv(f"{PATH}/sets/val.txt", names=["image_id"])
@@ -21,7 +24,7 @@ def read_data(FruitType):
     return (training_set_names, test_set_names, val_set_names, train_val_set_names)
 
 def read_image_annotations(filename):
-    PATH = "data/acfr-fruit-dataset/almonds"
+    PATH = "data/acfr-fruit-dataset/mangoes"
     filename_annotations = PATH + '/annotations/' + filename + '.csv'
     filename_image = PATH + '/images/' + filename + '.png'
 
@@ -39,20 +42,26 @@ class FruitDataset(Dataset):
 
     def __getitem__(self, index):
         image_id= self.data['image_id'][index]
-        print(image_id)
         filename_image = self.PATH + '/images/' + image_id + '.png'
         filename_annotations = self.PATH + '/annotations/' + image_id + '.csv'
 
         image = cv2.imread(filename_image, cv2.IMREAD_COLOR)
+        image = torch.transpose(torch.from_numpy(image), 0, 2) / 255.0
         annotations = pd.read_csv(filename_annotations)
 
         boxes = pd.DataFrame({'x_start': [0], 'y_start': [0],
                               'x_end': [0], 'y_end': [0]})
+        area = torch.empty((1,))
+
 
         if annotations.empty == False:
             boxes = pd.DataFrame({'x_start': annotations['x'], 'y_start': annotations['y'],
                                 'x_end': (annotations['x']+annotations['dx']),
                                 'y_end': (annotations['y']+annotations['dy'])})
+            boxes = torch.tensor(boxes.values)
+            area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+        else:
+            boxes = torch.empty((0,4))
 
         labels = torch.ones((self.data.shape[0],), dtype=torch.int64)
         isfruit = torch.zeros((self.data.shape[0],), dtype=torch.int64)
@@ -62,8 +71,9 @@ class FruitDataset(Dataset):
         target['labels'] = labels
         target['image_id'] = torch.tensor([index])
         target['isfruit'] = isfruit
+        target['area'] = area
 
-        return image, target, image_id
+        return image, target
 
     def __len__(self):
         return self.data.shape[0]
@@ -82,16 +92,17 @@ train_data_loader = DataLoader(
     num_workers=1
 )
 
-image, target, image_id = train_dataset.__getitem__(5)
-fig, ax = plt.subplots(1, 1, figsize=(16, 8))
+# image, target = train_dataset.__getitem__(5)
+# fig, ax = plt.subplots(1, 1, figsize=(16, 8))
 
-for idx, val in enumerate(target['boxes'].iterrows()):
-    x_start = int(val[1]['x_start'])
-    y_start = int(val[1]['y_start'])
-    x_end = int(val[1]['x_end'])
-    y_end = int(val[1]['y_end'])
-    cv2.rectangle(image, (x_start, y_start), (x_end, y_end), (255, 0, 0))
-
-ax.set_axis_off()
-ax.imshow(image)
-plt.show()
+# for idx, val in enumerate(target['boxes'].iterrows()):
+#     x_start = int(val[1]['x_start'])
+#     y_start = int(val[1]['y_start'])
+#     x_end = int(val[1]['x_end'])
+#     y_end = int(val[1]['y_end'])
+#     cv2.rectangle(image, (x_start, y_start), (x_end, y_end), (255, 0, 0))
+#
+# ax.set_axis_off()
+# ax.imshow(image)
+# plt.show()
+# plot_bounding_boxes(image, target['boxes'])
