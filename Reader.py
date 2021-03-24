@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, Dataset
 import torch
 import torchvision
 import matplotlib.pyplot as plt
+import numpy as np
 
 class FruitType(Enum):
     APPLE=1
@@ -44,15 +45,20 @@ class FruitDataset(Dataset):
         filename_annotations = self.PATH + '/annotations/' + image_id + '.csv'
 
         image = cv2.imread(filename_image, cv2.IMREAD_COLOR)
-        annotations = pd.read_csv(filename_annotations)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
+        image /= 255.0
+        # image = np.moveaxis(image, -1, 0)
+        annotations_df = pd.read_csv(filename_annotations)
+        print(annotations_df)
+        # boxes = pd.DataFrame({'x_start': [0], 'y_start': [0],
+        #                       'x_end': [0], 'y_end': [0]})
 
-        boxes = pd.DataFrame({'x_start': [0], 'y_start': [0],
-                              'x_end': [0], 'y_end': [0]})
+        boxes = np.genfromtxt(filename_annotations, delimiter=',')
 
-        if annotations.empty == False:
-            boxes = pd.DataFrame({'x_start': annotations['x'], 'y_start': annotations['y'],
-                                'x_end': (annotations['x']+annotations['dx']),
-                                'y_end': (annotations['y']+annotations['dy'])})
+        # if annotations.empty == False:
+            # boxes = pd.DataFrame({'x_start': annotations['x'], 'y_start': annotations['y'],
+            #                     'x_end': (annotations['x']+annotations['dx']),
+            #                     'y_end': (annotations['y']+annotations['dy'])})
 
         labels = torch.ones((self.data.shape[0],), dtype=torch.int64)
         isfruit = torch.zeros((self.data.shape[0],), dtype=torch.int64)
@@ -77,21 +83,33 @@ train_dataset = FruitDataset(training_data, PATH)
 
 train_data_loader = DataLoader(
     train_dataset,
-    batch_size=1,
-    shuffle=False,
-    num_workers=1
+    # batch_size=1,
+    # shuffle=False,
+    # num_workers=0,
 )
 
-image, target, image_id = train_dataset.__getitem__(5)
+images, target, image_id = next(iter(train_data_loader))
+image2, target2, image_id2 = train_dataset.__getitem__(0)
 fig, ax = plt.subplots(1, 1, figsize=(16, 8))
 
-for idx, val in enumerate(target['boxes'].iterrows()):
-    x_start = int(val[1]['x_start'])
-    y_start = int(val[1]['y_start'])
-    x_end = int(val[1]['x_end'])
-    y_end = int(val[1]['y_end'])
-    cv2.rectangle(image, (x_start, y_start), (x_end, y_end), (255, 0, 0))
+image = images[0]
+
+for idx, val in enumerate(target['boxes']):
+    # x_start = int(val[1].item())
+    # y_start = int(val[2].item())
+    # x_end = int(val[1].item() + val[3].item())
+    # y_end = int(val[2].item() + val[4].item())
+    x_start = int(val[0][1].item())
+    y_start = int(val[0][2].item())
+    x_end = int(val[0][1].item() + val[0][3].item())
+    y_end = int(val[0][2].item() + val[0][4].item())
+    print(x_start)
+    print(y_start)
+    print(x_end)
+    print(y_end)
+    # cv2.rectangle(image2, (20,30), (20,30), (255, 0, 0))
+    cv2.rectangle(image, (int(x_start), int(y_start)), (int(x_end), int(y_end)), (0, 255, 0), 5)
 
 ax.set_axis_off()
-ax.imshow(image)
+ax.imshow(image2)
 plt.show()
