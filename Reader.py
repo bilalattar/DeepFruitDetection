@@ -63,13 +63,13 @@ class FruitDataset(Dataset):
             boxes = torch.empty((0,4))
 
         labels = torch.ones((self.data.shape[0],), dtype=torch.int64)
-        isfruit = torch.zeros((self.data.shape[0],), dtype=torch.int64)
+        iscrowd = torch.zeros((self.data.shape[0],), dtype=torch.int64)
 
         target = {}
         target['boxes'] = boxes
         target['labels'] = labels
         target['image_id'] = torch.tensor([index])
-        target['isfruit'] = isfruit
+        target['iscrowd'] = iscrowd
         target['area'] = area
 
         return image, target
@@ -79,29 +79,3 @@ class FruitDataset(Dataset):
 
 def collate_fn(batch):
     return tuple(zip(*batch))
-
-PATH = "data/acfr-fruit-dataset/almonds"
-training_data = read_data(FruitType.APPLE)[0]
-train_dataset = FruitDataset(training_data, PATH)
-
-train_data_loader = DataLoader(
-    train_dataset,
-    batch_size=1,
-    shuffle=False,
-    num_workers=1
-)
-
-# image, target = train_dataset.__getitem__(5)
-# fig, ax = plt.subplots(1, 1, figsize=(16, 8))
-
-# for idx, val in enumerate(target['boxes'].iterrows()):
-#     x_start = int(val[1]['x_start'])
-#     y_start = int(val[1]['y_start'])
-#     x_end = int(val[1]['x_end'])
-#     y_end = int(val[1]['y_end'])
-#     cv2.rectangle(image, (x_start, y_start), (x_end, y_end), (255, 0, 0))
-#
-# ax.set_axis_off()
-# ax.imshow(image)
-# plt.show()
-# plot_bounding_boxes(image, target['boxes'])
