@@ -7,7 +7,8 @@ import torchvision
 import matplotlib.pyplot as plt
 
 from Plotter import plot_bounding_boxes
-
+PATH = "/content/drive/MyDrive/data/acfr-multifruit-2016/acfr-fruit-dataset/mangoes"
+# PATH = "data/acfr-fruit-dataset/mangoes"
 
 class FruitType(Enum):
     APPLE=1
@@ -15,7 +16,6 @@ class FruitType(Enum):
     ALMOND=3
 
 def read_data(FruitType):
-    PATH="data/acfr-fruit-dataset/mangoes"
     training_set_names = pd.read_csv(f"{PATH}/sets/train.txt", names=["image_id"])
     test_set_names = pd.read_csv(f"{PATH}/sets/test.txt", names=["image_id"])
     val_set_names = pd.read_csv(f"{PATH}/sets/val.txt", names=["image_id"])
@@ -24,7 +24,6 @@ def read_data(FruitType):
     return (training_set_names, test_set_names, val_set_names, train_val_set_names)
 
 def read_image_annotations(filename):
-    PATH = "data/acfr-fruit-dataset/mangoes"
     filename_annotations = PATH + '/annotations/' + filename + '.csv'
     filename_image = PATH + '/images/' + filename + '.png'
 
