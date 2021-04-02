@@ -119,10 +119,7 @@ def main():
 
 def show_image(img, model, device):
     with torch.no_grad():
-        # img, t = dataset_test[1]
-        # print(t['image_id'])
         prediction = model([img.to(device)])
-        print(img.shape)
         boxes = prediction[0].get('boxes')
         img = np.array(img)
         img = img.copy()
