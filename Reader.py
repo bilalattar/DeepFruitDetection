@@ -7,7 +7,7 @@ import torch
 
 PATH = "data/acfr-fruit-dataset/almonds"
 
-def read_data(FruitType):
+def read_data():
     training_set_names = pd.read_csv(f"{PATH}/sets/train.txt", names=["image_id"])
     test_set_names = pd.read_csv(f"{PATH}/sets/test.txt", names=["image_id"])
     val_set_names = pd.read_csv(f"{PATH}/sets/val.txt", names=["image_id"])

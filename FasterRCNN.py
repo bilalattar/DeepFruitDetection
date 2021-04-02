@@ -6,7 +6,7 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.rpn import AnchorGenerator
 from torch.utils.data import DataLoader
 from Plotter import plot_bounding_boxes
-from Reader import FruitDataset, read_data, FruitType
+from Reader import FruitDataset, read_data
 from detection import utils
 from detection.engine import train_one_epoch, evaluate
 
@@ -73,11 +73,11 @@ def main():
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 2)
 
     # use our dataset and defined transformations
-    training_data = read_data(FruitType.APPLE)[0]
+    training_data = read_data()[0]
     dataset = FruitDataset(training_data, PATH)
-    test_data = read_data(FruitType.APPLE)[1]
+    test_data = read_data()[1]
     dataset_test = FruitDataset(test_data, PATH)
-    val_data = read_data(FruitType.APPLE)[2]
+    val_data = read_data()[2]
     dataset_val = FruitDataset(val_data, PATH)
 
     # subset of training set
