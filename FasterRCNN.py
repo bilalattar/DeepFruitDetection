@@ -1,5 +1,4 @@
 import cv2
-import numpy as np
 import torch
 import torchvision
 from torchvision.models.detection import FasterRCNN
@@ -51,11 +50,9 @@ def main():
     model = FasterRCNN(backbone,
                        num_classes=2,
                        rpn_anchor_generator=anchor_generator,
-                       # box_predictor=torchvision.models.detection.faster_rcnn.FastRCNNPredictor(4096, num_classes=2),
                        box_roi_pool=roi_pooler,
                        min_size=600,
                        max_size=1000,
-                       #  rpn_anchor_generator=anchor_genreator,
                        rpn_pre_nms_top_n_train=12000,
                        rpn_pre_nms_top_n_test=6000,
                        rpn_post_nms_top_n_train=2000,

@@ -1,20 +1,11 @@
-from enum import Enum
 import numpy as np
 import pandas as pd
 import cv2
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 import torch
 
-from Plotter import plot_bounding_boxes
 
-
-# PATH = "/content/drive/MyDrive/data/acfr-multifruit-2016/acfr-fruit-dataset/mangoes"
 PATH = "data/acfr-fruit-dataset/almonds"
-
-class FruitType(Enum):
-    APPLE=1
-    MANGO=2
-    ALMOND=3
 
 def read_data(FruitType):
     training_set_names = pd.read_csv(f"{PATH}/sets/train.txt", names=["image_id"])
@@ -49,8 +40,6 @@ class FruitDataset(Dataset):
         image = torch.from_numpy(image) / 255.0
         annotations = pd.read_csv(filename_annotations)
 
-        boxes = pd.DataFrame({'x_start': [0], 'y_start': [0],
-                              'x_end': [0], 'y_end': [0]})
         area = torch.empty((1,))
 
 
