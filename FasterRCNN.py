@@ -123,23 +123,18 @@ def main():
             maxAcc = acc
             torch.save(model, 'model.pt')
 
-        # plot image
-        show_image(dataset_test[1][0], model, device)
-
     # evaluate test set
     evaluate(model, data_loader_test, device=device)
     print("That's it!")
 
-
-def show_image(img, model, device):
+# predict and plot image
+def show_image(readed_img, model, device):
     with torch.no_grad():
-        prediction = model([img.to(device)])
+        prediction = model([readed_img[0].to(device)])
         boxes = prediction[0].get('boxes')
-        img = np.array(img)
-        img = img.copy()
-        image = cv2.imread("data/acfr-fruit-dataset/almonds/images/fromEast_61_18_IMG_4417_i1500j1800.png")
+        filename_image = 'data/acfr-fruit-dataset/almonds' + '/images/' + readed_img[1]['image_id'] + '.png'
+        image = cv2.imread(filename_image)
         plot_bounding_boxes(image, boxes)
-
 
 if __name__ == '__main__':
     main()

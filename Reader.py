@@ -69,7 +69,7 @@ class FruitDataset(Dataset):
         target = {}
         target['boxes'] = boxes
         target['labels'] = labels
-        target['image_id'] = torch.tensor([index])
+        target['image_id'] = image_id
         target['iscrowd'] = iscrowd
         target['area'] = area
 
