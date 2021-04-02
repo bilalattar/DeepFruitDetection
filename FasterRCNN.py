@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 import torch
 import torchvision
 from torchvision.models.detection import FasterRCNN
@@ -9,6 +10,7 @@ from Plotter import plot_bounding_boxes
 from Reader import FruitDataset, read_data
 from detection import utils
 from detection.engine import train_one_epoch, evaluate
+from torch.utils.tensorboard import SummaryWriter
 
 
 def main():
@@ -82,7 +84,7 @@ def main():
 
     # subset of training set
     indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:15])
+    dataset = torch.utils.data.Subset(dataset, indices[:27])
 
     # define training, test, and validation data loaders
     data_loader = torch.utils.data.DataLoader(
@@ -105,20 +107,20 @@ def main():
 
     # let's train it for x epochs
     num_epochs = 40000
-
+    writer = SummaryWriter()
     maxAcc = 0.0
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
         train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=100)
         # put the model in evaluation mode
         model.eval()
-
         # evaluate on the validation dataset and save model if accuracy is highest yet
         cocoEval = evaluate(model, data_loader_val, device=device)
         acc = cocoEval.coco_eval.get('bbox').accuracy
         if acc > maxAcc:
             maxAcc = acc
-            torch.save(model, 'model.pt')
+            torch.save(model, 'model_27.pt')
+        writer.add_scalar('Loss/validation_27', acc, epoch)
 
     # evaluate test set
     evaluate(model, data_loader_test, device=device)
