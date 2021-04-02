@@ -80,17 +80,22 @@ def main():
     dataset = FruitDataset(training_data, PATH)
     test_data = read_data(FruitType.APPLE)[1]
     dataset_test = FruitDataset(test_data, PATH)
+    val_data = read_data(FruitType.APPLE)[2]
+    dataset_val = FruitDataset(val_data, PATH)
 
     # subset of training set
     indices = torch.randperm(len(dataset)).tolist()
     dataset = torch.utils.data.Subset(dataset, indices[:15])
 
-    # define training and validation data loaders
+    # define training, test, and validation data loaders
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=1, shuffle=True, num_workers=1,
         collate_fn=utils.collate_fn)
     data_loader_test = torch.utils.data.DataLoader(
         dataset_test, batch_size=1, shuffle=False, num_workers=1,
+        collate_fn=utils.collate_fn)
+    data_loader_val = torch.utils.data.DataLoader(
+        dataset_val, batch_size=1, shuffle=False, num_workers=1,
         collate_fn=utils.collate_fn)
 
     # move model to the right device
@@ -104,16 +109,25 @@ def main():
     # let's train it for x epochs
     num_epochs = 40000
 
+    maxAcc = 0.0
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
         train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=100)
         # put the model in evaluation mode
         model.eval()
-        # evaluate on the test dataset
-        evaluate(model, data_loader_test, device=device)
+
+        # evaluate on the validation dataset and save model if accuracy is highest yet
+        cocoEval = evaluate(model, data_loader_val, device=device)
+        acc = cocoEval.coco_eval.get('bbox').accuracy
+        if acc > maxAcc:
+            maxAcc = acc
+            torch.save(model, 'model.pt')
+
         # plot image
         show_image(dataset_test[1][0], model, device)
 
+    # evaluate test set
+    evaluate(model, data_loader_test, device=device)
     print("That's it!")
 
 
