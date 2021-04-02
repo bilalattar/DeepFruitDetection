@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 def plot_bounding_boxes(image, annotations):
     fig, ax = plt.subplots(1, 1, figsize=(16, 8))
-    annons = annotations.numpy()
+    annons = annotations.cpu().numpy()
     for box in annons:
         x_start = int(box[0])
         y_start = int(box[1])

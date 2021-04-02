@@ -1,14 +1,15 @@
 from enum import Enum
+import numpy as np
 import pandas as pd
 import cv2
 from torch.utils.data import DataLoader, Dataset
 import torch
-import torchvision
-import matplotlib.pyplot as plt
 
 from Plotter import plot_bounding_boxes
-PATH = "/content/drive/MyDrive/data/acfr-multifruit-2016/acfr-fruit-dataset/mangoes"
-# PATH = "data/acfr-fruit-dataset/mangoes"
+
+
+# PATH = "/content/drive/MyDrive/data/acfr-multifruit-2016/acfr-fruit-dataset/mangoes"
+PATH = "data/acfr-fruit-dataset/almonds"
 
 class FruitType(Enum):
     APPLE=1
@@ -20,7 +21,6 @@ def read_data(FruitType):
     test_set_names = pd.read_csv(f"{PATH}/sets/test.txt", names=["image_id"])
     val_set_names = pd.read_csv(f"{PATH}/sets/val.txt", names=["image_id"])
     train_val_set_names = pd.read_csv(f"{PATH}/sets/train_val.txt", names=["image_id"])
-
     return (training_set_names, test_set_names, val_set_names, train_val_set_names)
 
 def read_image_annotations(filename):
@@ -44,8 +44,9 @@ class FruitDataset(Dataset):
         filename_image = self.PATH + '/images/' + image_id + '.png'
         filename_annotations = self.PATH + '/annotations/' + image_id + '.csv'
 
-        image = cv2.imread(filename_image, cv2.IMREAD_COLOR)
-        image = torch.transpose(torch.from_numpy(image), 0, 2) / 255.0
+        image = cv2.imread(filename_image)
+        image = np.moveaxis(image, -1, 0)
+        image = torch.from_numpy(image) / 255.0
         annotations = pd.read_csv(filename_annotations)
 
         boxes = pd.DataFrame({'x_start': [0], 'y_start': [0],
