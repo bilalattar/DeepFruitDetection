@@ -18,61 +18,9 @@ def main():
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda')
 
-    # load backbone
-    vgg = torchvision.models.vgg16(pretrained=False)
-    backbone = vgg.features[:-1]
-    for param in backbone.parameters():
-        param.require_grad = True
-
-    # FasterRCNN needs to know the number of
-    # output channels in a backbone. For mobilenet_v2, it's 1280
-    # so we need to add it here
-    backbone.out_channels = 512
-
-    # let's make the RPN generate 5 x 3 anchors per spatial
-    # location, with 5 different sizes and 3 different aspect
-    # ratios. We have a Tuple[Tuple[int]] because each feature
-    # map could potentially have different sizes and
-    # aspect ratios
-    anchor_generator = AnchorGenerator(sizes=((128, 256, 512),),  # smaller bounding boxes: 64, 128, 256
-                                       aspect_ratios=((0.5, 1.0, 2.0),))
-
-    # let's define what are the feature maps that we will
-    # use to perform the region of interest cropping, as well as
-    # the size of the crop after rescaling.
-    # if your backbone returns a Tensor, featmap_names is expected to
-    # be [0]. More generally, the backbone should return an
-    # OrderedDict[Tensor], and in featmap_names you can choose which
-    # feature maps to use.
-    roi_pooler = torchvision.ops.MultiScaleRoIAlign(featmap_names=['0'],
-                                                    output_size=9,
-                                                    sampling_ratio=2)
-
-    # put the pieces together inside a FasterRCNN model
-    model = FasterRCNN(backbone,
-                       num_classes=2,
-                       rpn_anchor_generator=anchor_generator,
-                       box_roi_pool=roi_pooler,
-                       min_size=600,
-                       max_size=1000,
-                       rpn_pre_nms_top_n_train=12000,
-                       rpn_pre_nms_top_n_test=6000,
-                       rpn_post_nms_top_n_train=2000,
-                       rpn_post_nms_top_n_test=300,
-                       rpn_nms_thresh=0.3,
-                       rpn_fg_iou_thresh=0.7,
-                       rpn_bg_iou_thresh=0.2,
-                       rpn_batch_size_per_image=256,
-                       rpn_positive_fraction=0.5,
-                       box_batch_size_per_image=128,
-                       box_positive_fraction=0.25,
-                       box_score_thresh=0.1,
-                       box_nms_thresh=0.3,
-                       box_detections_per_img=100
-                       )
-    in_features = model.roi_heads.box_predictor.cls_score.in_features
-    # replace the pre-trained head with a new one
-    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 2)
+    # load resnet faster rcnn
+    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=False, progress=True, num_classes=2,
+                                                                 pretrained_backbone=False)
 
     # use our dataset and defined transformations
     training_data = read_data()[0]
@@ -84,7 +32,7 @@ def main():
 
     # subset of training set
     indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:27])
+    dataset = torch.utils.data.Subset(dataset, indices[:3])
 
     # define training, test, and validation data loaders
     data_loader = torch.utils.data.DataLoader(
@@ -119,12 +67,13 @@ def main():
         acc = cocoEval.coco_eval.get('bbox').accuracy
         if acc > maxAcc:
             maxAcc = acc
-            torch.save(model, 'model_27.pt')
-        writer.add_scalar('Loss/validation_27', acc, epoch)
+            torch.save(model, 'model_3_resnet.pt')
+        writer.add_scalar('Loss/validation_3_resnet', acc, epoch)
 
     # evaluate test set
     evaluate(model, data_loader_test, device=device)
     print("That's it!")
+
 
 # predict and plot image
 def show_image(readed_img, model, device):
@@ -134,6 +83,7 @@ def show_image(readed_img, model, device):
         filename_image = 'data/acfr-fruit-dataset/almonds' + '/images/' + readed_img[1]['image_id'] + '.png'
         image = cv2.imread(filename_image)
         plot_bounding_boxes(image, boxes)
+
 
 if __name__ == '__main__':
     main()

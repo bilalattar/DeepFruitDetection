@@ -4,7 +4,7 @@ from Reader import read_data, FruitDataset
 from detection import utils
 from detection.engine import evaluate
 
-MODEL_PATH = 'model_27.pt'
+MODEL_PATH = 'model_3.pt'
 DATA_PATH = "data/acfr-fruit-dataset/almonds"
 
 def evaluate_model():
