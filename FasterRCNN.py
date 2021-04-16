@@ -1,3 +1,5 @@
+#The code to reproduce the project was inspired by the following tutorial:
+#https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html
 import cv2
 import torch
 import torchvision
@@ -9,6 +11,7 @@ from Plotter import plot_bounding_boxes
 from Reader import FruitDataset, read_data
 from detection import utils
 from detection.engine import train_one_epoch, evaluate
+from torch.utils.tensorboard import SummaryWriter
 
 
 def main():
@@ -47,6 +50,9 @@ def main():
                                                     sampling_ratio=2)
 
     # put the pieces together inside a FasterRCNN model
+    #For ResNet-50, use the following line
+    # model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=False, progress=True, num_classes=2,
+    #                                                              pretrained_backbone=False)
     model = FasterRCNN(backbone,
                        num_classes=2,
                        rpn_anchor_generator=anchor_generator,
@@ -82,7 +88,7 @@ def main():
 
     # subset of training set
     indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:15])
+    dataset = torch.utils.data.Subset(dataset, indices[:27])
 
     # define training, test, and validation data loaders
     data_loader = torch.utils.data.DataLoader(
@@ -105,20 +111,20 @@ def main():
 
     # let's train it for x epochs
     num_epochs = 40000
-
+    writer = SummaryWriter()
     maxAcc = 0.0
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
         train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=100)
         # put the model in evaluation mode
         model.eval()
-
         # evaluate on the validation dataset and save model if accuracy is highest yet
         cocoEval = evaluate(model, data_loader_val, device=device)
         acc = cocoEval.coco_eval.get('bbox').accuracy
         if acc > maxAcc:
             maxAcc = acc
-            torch.save(model, 'model.pt')
+            torch.save(model, 'model_27.pt')
+        writer.add_scalar('Loss/validation_27', acc, epoch)
 
     # evaluate test set
     evaluate(model, data_loader_test, device=device)
