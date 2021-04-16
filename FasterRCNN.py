@@ -49,6 +49,9 @@ def main():
                                                     sampling_ratio=2)
 
     # put the pieces together inside a FasterRCNN model
+    #For ResNet-50, use the following line
+    # model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=False, progress=True, num_classes=2,
+    #                                                              pretrained_backbone=False)
     model = FasterRCNN(backbone,
                        num_classes=2,
                        rpn_anchor_generator=anchor_generator,
