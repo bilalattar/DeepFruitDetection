@@ -1,5 +1,6 @@
+#The code to reproduce the project was inspired by the following tutorial:
+#https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html
 import cv2
-import numpy as np
 import torch
 import torchvision
 from torchvision.models.detection import FasterRCNN
